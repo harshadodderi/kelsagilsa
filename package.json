@@ -13,7 +13,11 @@
     "verify:privacy": "tsx scripts/verify-privacy.ts",
     "sync:launch-set": "tsx scripts/sync-launch-set.ts",
     "seed:import": "tsx scripts/import-seed-observations.ts",
-    "db:check": "bash supabase/tests/run-local-checks.sh"
+    "db:check": "bash supabase/tests/run-local-checks.sh",
+    "sync:benchmarks": "tsx scripts/sync-benchmarks.ts",
+    "smoke:web": "tsx scripts/smoke-web.ts",
+    "icons": "tsx scripts/make-icons.ts",
+    "mint:link": "tsx scripts/mint-solicit-link.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",
@@ -34,6 +38,7 @@
   "devDependencies": {
     "@types/react": "~19.1.0",
     "babel-preset-expo": "~54.0.0",
+    "playwright": "^1.62.1",
     "tsx": "^4.23.12",
     "typescript": "~5.9.2",
     "vitest": "^3.2.7"

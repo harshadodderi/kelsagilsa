@@ -37,7 +37,13 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      # Order matters: recompute (above), then bake, then export. Baking
+      # before the recompute ships yesterday's numbers in today's HTML.
       - run: npx tsx scripts/sync-launch-set.ts
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+      - run: npx tsx scripts/sync-benchmarks.ts
         env:
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}

@@ -227,10 +227,18 @@ grant execute on function get_public_reports(text, text) to anon, authenticated;
 
 create or replace function get_organic_share(p_days int default 7)
 returns table (window_days int, total int, organic int, organic_share numeric)
-language sql
+language plpgsql
 security definer
 set search_path = public
 as $$
+begin
+  -- Admin only. This is a business metric, not a public statistic, and it is
+  -- the one number that decides whether the product is possible (§13.1).
+  if not is_admin() then
+    raise exception 'not permitted' using errcode = '42501';
+  end if;
+
+  return query
   select p_days,
          count(*)::int,
          count(*) filter (where source = 'organic')::int,
@@ -239,7 +247,11 @@ as $$
                          / count(*), 3) end
   from reports
   where created_at > now() - make_interval(days => p_days)
+    -- Seeded rows are excluded from both sides: hand-collected observations
+    -- must not be able to flatter or depress the share.
     and source <> 'seeded';
+end;
 $$;
 
 revoke all on function get_organic_share(int) from public, anon;
+grant execute on function get_organic_share(int) to authenticated;

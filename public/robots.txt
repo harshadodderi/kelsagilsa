@@ -1,0 +1,11 @@
+# The benchmark pages are the acquisition channel (§12.5). They are meant to
+# be indexed, and they need no account to read (§5.2).
+User-agent: *
+Allow: /
+
+# Nothing personal is behind these, but they are noise in an index.
+Disallow: /report
+Disallow: /_sitemap
+Disallow: /admin
+
+Sitemap: https://kelsagilsa.com/sitemap.xml

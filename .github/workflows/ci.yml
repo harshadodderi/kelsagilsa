@@ -28,3 +28,24 @@ jobs:
       - run: npm run db:check
         env:
           PGBIN: /usr/lib/postgresql/16/bin
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      # Builds the static site and drives it: both themes, no console errors,
+      # no horizontal scroll at 390px, tap targets, and first contentful paint
+      # against the 2.5s budget on a throttled connection (§12.4, §12.5).
+      - run: npm run build:web
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ci
+      # No CHROMIUM_PATH here: Playwright's own download is on the runner, and
+      # the script falls back to it when the variable is unset.
+      - run: npm run smoke:web

@@ -405,15 +405,25 @@ grant execute on function compare_to_benchmark(text, text, numeric) to anon, aut
 
 create or replace function get_coverage()
 returns table (pairs_total int, pairs_n10 int, pairs_n20 int)
-language sql
+language plpgsql
 security definer
 set search_path = public
 as $$
+begin
+  -- is_admin() is defined in 0004; this function is only ever called from the
+  -- admin review page, which is applied after it.
+  if not is_admin() then
+    raise exception 'not permitted' using errcode = '42501';
+  end if;
+
+  return query
   select count(*)::int,
          count(*) filter (where n >= 10)::int,
          count(*) filter (where n >= 20)::int
   from area_job_stats
   where precision = 6;
+end;
 $$;
 
 revoke all on function get_coverage() from public, anon;
+grant execute on function get_coverage() to authenticated;

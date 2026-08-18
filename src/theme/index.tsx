@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react'
-import { useColorScheme } from 'react-native'
+import { useColorScheme } from './useColorScheme'
 import { dark, light, type Palette } from './tokens'
 
 export * from './tokens'

@@ -22,7 +22,7 @@ async function main() {
 
   const { data: jobs, error: jobsError } = await db
     .from('job_types')
-    .select('slug')
+    .select('slug, name, size_qualifier, typical_hint')
     .eq('published', true)
     .order('sort_order')
   if (jobsError) throw jobsError
@@ -34,17 +34,43 @@ async function main() {
   if (citiesError) throw citiesError
 
   const body = `/**
- * The pre-rendered route space. GENERATED — run \`npx tsx scripts/sync-launch-set.ts\`.
+ * The launch set: the job types that survived Phase 0, and the cities that are
+ * live. This is also the pre-rendered route space (§12.5).
+ *
+ * GENERATED — run \`npx tsx scripts/sync-launch-set.ts\`. Edit the database.
+ *
+ * \`name\` is the label shown everywhere a job type appears, and it is the
+ * wording people actually used in the sprint rather than a tidied-up term (§2.5).
  *
  * Per-provider pages are deliberately absent: live data, unbounded route space.
  */
+export interface JobType {
+  slug: string
+  name: string
+  sizeQualifier: string | null
+  typicalHint: string | null
+}
+
 export const CITIES = [${(cities ?? []).map((c) => `'${c.slug}'`).join(', ')}] as const
 
-export const JOB_TYPE_SLUGS = [
-${(jobs ?? []).map((j) => `  '${j.slug}',`).join('\n')}
-] as const
+export const JOB_TYPES: JobType[] = ${JSON.stringify(
+    (jobs ?? []).map((j) => ({
+      slug: j.slug,
+      name: j.name,
+      sizeQualifier: j.size_qualifier ?? null,
+      typicalHint: j.typical_hint ?? null,
+    })),
+    null,
+    2,
+  )}
+
+export const JOB_TYPE_SLUGS: string[] = JOB_TYPES.map((j) => j.slug)
 
 export type CitySlug = (typeof CITIES)[number]
+
+export function jobTypeName(slug: string): string {
+  return JOB_TYPES.find((j) => j.slug === slug)?.name ?? slug.replace(/-/g, ' ')
+}
 `
 
   writeFileSync('src/data/launch-set.ts', body)

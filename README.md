@@ -59,16 +59,39 @@ in Phase 2, against people who owe you nothing.
 ## Layout
 
 ```
-supabase/migrations/   the schema, phase by phase. 0001–0005 and 0009 are
-                       Phase 1; 0006 is Phase 3; 0007 is Phase 4
+supabase/migrations/   the schema, phase by phase. 0001–0005, 0009 and 0010
+                       are Phase 1; 0006 is Phase 3; 0007 is Phase 4
+supabase/functions/    send-otp — the only route by which a code is sent
+supabase/tests/        every migration applied to a throwaway Postgres, plus
+                       behavioural assertions
 app/                   expo-router routes. /prices/[city]/[job] is the
                        acquisition channel and is pre-rendered
 src/lib/               pure logic, no React Native imports, unit-tested
+src/data/              GENERATED — the launch set and the baked figures
 src/theme/             light AND dark tokens, parameterised from day one
 src/locales/           en, kn, hi — two of them intentionally near-empty
-scripts/               Phase 0 diagnostics, seed import, privacy verification
+scripts/               Phase 0 diagnostics, seed import, build-time baking,
+                       privacy verification, browser smoke
 tests/                 vitest, on the pure logic
 ```
+
+### How a price page gets its numbers
+
+The pages are the acquisition channel, so they are real HTML with real figures
+in it — not a shell that fetches. Three steps, in this order, nightly:
+
+1. `run_nightly()` recomputes weights, then every stat.
+2. `npm run sync:launch-set && npm run sync:benchmarks` writes the published job
+   types and the **city-level** figures into `src/data/`.
+3. `npm run build:web` pre-renders every `/prices/[city]/[job-type]`.
+
+In the browser the page then asks for location and narrows to the reader's
+locality, naming whichever level it ends up showing. Nothing is baked below the
+city level, because that is the widest honest answer and the only one knowable
+before a browser says where it is.
+
+First contentful paint measures **~810ms** on throttled Slow 4G with 4× CPU
+throttling, against the 2.5s budget. `npm run smoke:web` measures it.
 
 ### The parts that carry the product
 
@@ -92,13 +115,42 @@ tests/                 vitest, on the pure logic
 ```bash
 cp .env.example .env      # fill in the Supabase URL, anon key and Turnstile key
 npm install
-npm run typecheck && npm test
-npm run web
+npm run typecheck && npm test        # types and the pure logic
+npm run db:check                     # every migration + the database assertions
+npm run build:web && npm run smoke:web   # both themes, in a real browser
 ```
 
 Apply migrations in order. `0006` and `0007` are phase-gated and deliberately
 not part of the Phase 1 apply — `0007` in particular should not be applied
 before the §11.3 GST question has an answer, because you may have to unbuild it.
+
+Deploy the send function, which is the only route by which a code is sent:
+
+```bash
+supabase functions deploy send-otp --no-verify-jwt
+supabase secrets set OTP_EMAIL_PEPPER="$(openssl rand -hex 32)"
+```
+
+`--no-verify-jwt` is deliberate: signing in is what it does, so the caller
+cannot already have a token.
+
+### The scripts
+
+| Command | What it does |
+|---|---|
+| `npm run phase0 -- observations.csv` | the Phase 0 diagnostics and the §2.4 verdict |
+| `npm run seed:import -- observations.csv` | the sprint output in, as `source='seeded'` |
+| `npm run sync:launch-set` | regenerate the published job types and cities |
+| `npm run sync:benchmarks` | bake the city figures into the static build |
+| `npm run mint:link "apartment group"` | a link whose reports are tagged `solicited` |
+| `npm run verify:privacy` | the §3.1 assertions against a real project |
+| `npm run db:check` | every migration, applied, plus behavioural assertions |
+| `npm run smoke:web` | the built site in a browser, both themes, FCP |
+| `npm run icons` | re-render the PWA icons from `public/favicon.svg` |
+
+The Monday review (§9.4) is a page, not a query you remember: `/admin/review`,
+unlinked, gated on `role = 'admin'` in the database. It opens with metric zero,
+because that is the number that decides whether any of the rest matters.
 
 ## Before a real user touches it
 
@@ -115,9 +167,11 @@ The legal gate (§11) is a gate, not an appendix.
 - [ ] Turnstile enabled on Auth → Attack Protection, plus 5 sends per email per
       hour and 20 per IP per hour
 - [ ] `npm run verify:privacy` green against the real project
-- [ ] EXIF stripping confirmed on a real device photo, not assumed
-- [ ] First contentful paint under 2.5s on throttled Slow 4G, measured in
-      DevTools rather than on office wifi
+- [ ] `send-otp` deployed and `OTP_EMAIL_PEPPER` set, or sends are unlimited
+      and unlogged
+- [x] First contentful paint under 2.5s on throttled Slow 4G — measured at
+      ~810ms by `npm run smoke:web`, re-measured on every CI run
+- [x] Both themes verified in a browser, not assumed
 - [ ] Weekly `pg_dump` workflow has its secrets set — free-tier Supabase has no
       point-in-time recovery
 

@@ -1,0 +1,9 @@
+<!--
+  The mark. A rupee figure in the accent colour, because the number is the
+  product (§12.1) and a tab strip is exactly where you have one glyph to say so.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Kelsagilsa">
+  <rect width="64" height="64" rx="14" fill="#0B5F53"/>
+  <text x="32" y="45" font-family="ui-monospace, SFMono-Regular, Menlo, monospace"
+        font-size="40" font-weight="700" fill="#FFFFFF" text-anchor="middle">₹</text>
+</svg>

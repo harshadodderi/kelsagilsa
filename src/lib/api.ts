@@ -136,3 +136,72 @@ export async function getMyProfile(): Promise<MyProfile | null> {
   if (error) throw error
   return data
 }
+
+// ---------------------------------------------------------------------------
+// Moderation. Every function here is gated on `role = 'admin'` inside the
+// database (§5.3) — the screen checks too, but only so it can say something
+// useful rather than fail with a permission error.
+// ---------------------------------------------------------------------------
+
+export interface ReviewItem {
+  bucket:
+    | 'low_weight'
+    | 'flagged_outlier'
+    | 'single_booking_new_account'
+  subject_id: string
+  detail: string
+  at: string
+}
+
+/** §9.4 — ten minutes, one page. */
+export async function getMondayReview(): Promise<ReviewItem[]> {
+  const { data, error } = await supabase.rpc('admin_monday_review')
+  if (error) throw error
+  return (data ?? []) as ReviewItem[]
+}
+
+/**
+ * A flagged report that survives review is reinstated at full weight; one that
+ * does not is hidden, never deleted (§9.3). Both are logged to
+ * moderation_actions, which is what makes compliance evidenceable (§11.1).
+ */
+export async function moderateReport(
+  reportId: string,
+  action: 'reinstate' | 'hide',
+  reason: string,
+): Promise<void> {
+  const { error } = await supabase.rpc('moderate_report', {
+    p_report_id: reportId,
+    p_action: action,
+    p_reason: reason,
+  })
+  if (error) throw error
+}
+
+export interface OrganicShare {
+  window_days: number
+  total: number
+  organic: number
+  organic_share: number | null
+}
+
+/** Metric zero (§13.1). */
+export async function getOrganicShare(days = 7): Promise<OrganicShare | null> {
+  const { data, error } = await supabase
+    .rpc('get_organic_share', { p_days: days })
+    .maybeSingle<OrganicShare>()
+  if (error) throw error
+  return data
+}
+
+export interface Coverage {
+  pairs_total: number
+  pairs_n10: number
+  pairs_n20: number
+}
+
+export async function getCoverage(): Promise<Coverage | null> {
+  const { data, error } = await supabase.rpc('get_coverage').maybeSingle<Coverage>()
+  if (error) throw error
+  return data
+}

@@ -348,6 +348,45 @@ begin
 end;
 $$;
 
+-- ---------------------------------------------------------------------------
+-- §13.1 — metric zero is admin-only, and seeded rows count toward neither side
+-- ---------------------------------------------------------------------------
+
+do $$
+declare
+  v_admin uuid;
+  v_share record;
+  v_denied boolean := false;
+begin
+  select id into v_admin from auth.users
+  where id not in (select id from users) limit 1;
+
+  if v_admin is null then
+    insert into auth.users (id) values (gen_random_uuid()) returning id into v_admin;
+  end if;
+
+  insert into users (id, name, birth_year) values (v_admin, 'Ops Person', 1988);
+
+  -- As an ordinary signed-in user: denied.
+  perform set_config('kelsagilsa.test_uid', v_admin::text, true);
+  begin
+    perform * from get_organic_share(7);
+  exception
+    when sqlstate '42501' then v_denied := true;
+  end;
+  assert v_denied, 'a non-admin could read metric zero';
+
+  -- As an admin: allowed, and seeded rows are excluded from the denominator.
+  update users set role = 'admin' where id = v_admin;
+  select * into v_share from get_organic_share(7);
+
+  assert v_share.total = (
+    select count(*) from reports
+    where created_at > now() - interval '7 days' and source <> 'seeded'),
+    'organic share counted seeded rows';
+end;
+$$;
+
 rollback;
 
 \echo 'price-engine.test.sql: all assertions passed'

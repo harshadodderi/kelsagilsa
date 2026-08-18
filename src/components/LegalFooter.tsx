@@ -1,6 +1,6 @@
 import { Text, View } from 'react-native'
 import { Link } from 'expo-router'
-import { space, type as typeTokens, useTheme } from '@/theme'
+import { layout, space, type as typeTokens, useTheme } from '@/theme'
 
 /**
  * Terms and privacy notice, linked from every footer, plus the named grievance
@@ -11,7 +11,16 @@ import { space, type as typeTokens, useTheme } from '@/theme'
  */
 export function LegalFooter() {
   const c = useTheme()
-  const linkStyle = { ...typeTokens.small, color: c.textMuted, textDecorationLine: 'underline' as const }
+  // These are tap targets, not prose links: someone reaches for "Grievance"
+  // on a cheap phone with a wet thumb. 44px minimum, like everything else
+  // touchable (§12.4).
+  const linkStyle = {
+    ...typeTokens.small,
+    color: c.textMuted,
+    textDecorationLine: 'underline' as const,
+    minHeight: layout.minTapTarget,
+    lineHeight: layout.minTapTarget,
+  }
 
   return (
     <View style={{ gap: space.xs, paddingTop: space.lg }}>

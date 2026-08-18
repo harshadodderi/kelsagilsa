@@ -2,6 +2,7 @@ import { Text, View } from 'react-native'
 import { Link, useRouter } from 'expo-router'
 import { Card, PrimaryButton, Screen } from '@/components/Screen'
 import { LegalFooter } from '@/components/LegalFooter'
+import { LanguagePicker } from '@/components/LanguagePicker'
 import { space, type as typeTokens, useTheme } from '@/theme'
 import { t } from '@/lib/i18n'
 
@@ -41,6 +42,8 @@ export default function Home() {
         </Text>
         <PrimaryButton label={t('benchmark.empty.cta')} onPress={() => router.push('/report')} />
       </Card>
+
+      <LanguagePicker />
 
       <LegalFooter />
     </Screen>

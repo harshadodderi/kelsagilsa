@@ -61,7 +61,12 @@ export const type: Record<
   price: { fontSize: 34, fontWeight: '700', fontVariant: ['tabular-nums'] },
   priceSmall: { fontSize: 22, fontWeight: '700', fontVariant: ['tabular-nums'] },
   /** Monospace for every number — prices, distances, counts (§12.1). */
-  mono: { fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' },
+  mono: {
+    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+    // Tabular figures everywhere a number appears, not only on the big one:
+    // a column of prices that shifts as digits change reads as unstable.
+    fontVariant: ['tabular-nums'],
+  },
   title: { fontSize: 24, fontWeight: '700' },
   body: { fontSize: 17 },
   /** Every input >= 16px or iOS Safari zooms on focus and never back (§12.4). */

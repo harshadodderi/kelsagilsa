@@ -424,15 +424,23 @@ $$;
 -- possible (§13.2). Below 25% after 30 accepted bookings the loop is broken.
 create or replace function get_report_rate()
 returns table (accepted_bookings int, reports_from_bookings int, rate numeric)
-language sql
+language plpgsql
 security definer
 set search_path = public
 as $$
+begin
+  if not is_admin() then
+    raise exception 'not permitted' using errcode = '42501';
+  end if;
+
+  return query
   select a.c, b.c,
          case when a.c = 0 then null else round(b.c::numeric / a.c, 3) end
   from (select count(*)::int c from bookings
          where status in ('accepted', 'done')) a,
        (select count(*)::int c from reports where booking_id is not null) b;
+end;
 $$;
 
 revoke all on function get_report_rate() from public, anon;
+grant execute on function get_report_rate() to authenticated;

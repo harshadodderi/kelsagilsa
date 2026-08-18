@@ -23,14 +23,32 @@ export const supabase = createClient(url ?? 'http://localhost', anonKey ?? 'anon
  * 6-digit code rather than a link: they never leave the tab, which is what
  * makes §5.2's "sign in after the numbers are entered" work at all.
  *
- * `captchaToken` is not optional in production. signInWithOtp is an open
- * endpoint the moment you deploy (§5.1).
+ * Note what this does NOT call: `supabase.auth.signInWithOtp`. Sends go
+ * through the send-otp edge function, which applies the per-email and per-IP
+ * limits and writes the send log before forwarding to GoTrue (§5.1). A limit
+ * the client enforces is a limit an attacker skips, so the client does not
+ * have one.
  */
-export async function sendOtp(email: string, captchaToken?: string) {
-  return supabase.auth.signInWithOtp({
-    email,
-    options: { shouldCreateUser: true, captchaToken },
-  })
+export async function sendOtp(
+  email: string,
+  captchaToken?: string,
+): Promise<{ error: { message: string } | null }> {
+  try {
+    const response = await fetch(`${url}/functions/v1/send-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: anonKey ?? '' },
+      body: JSON.stringify({ email, captchaToken }),
+    })
+
+    const body = (await response.json().catch(() => ({}))) as { error?: string }
+    if (!response.ok) {
+      // 429 carries the throttle's own wording, already fit to show a person.
+      return { error: { message: body.error ?? 'We could not send a code just now.' } }
+    }
+    return { error: null }
+  } catch {
+    return { error: { message: 'You appear to be offline.' } }
+  }
 }
 
 export async function verifyOtp(email: string, token: string) {

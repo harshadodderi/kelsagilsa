@@ -10,7 +10,7 @@
 --   as an anonymous data point in the price aggregate. Free-text comments and
 --   photos are deleted.
 --
--- That sentence is in the privacy notice (docs/legal/privacy.md) in exactly
+-- That sentence is in the privacy notice (app/legal/privacy.tsx) in exactly
 -- these terms.
 
 create or replace function erase_my_account()

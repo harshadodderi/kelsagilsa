@@ -60,7 +60,55 @@ has to be shaped to receive them: `reports.booking_id` exists from the first
 row, without its foreign key, precisely so that no report ever needs
 reclassifying as verified.
 
-## 5. The local database harness shims PostGIS
+## 5. The colour scheme hook is ours, not React Native Web's
+
+`useColorScheme` from react-native-web seeds its state during the static render
+and does not re-read the media query when the page hydrates. Every page is
+served as pre-rendered HTML (§12.5), so a reader whose device is in dark mode
+got the light palette — on a page whose `<body>` background had correctly gone
+dark, which made it look like a half-broken theme rather than a bug.
+
+`src/theme/useColorScheme.ts` reads the media query through
+`useSyncExternalStore`, which re-syncs on hydration. Native still uses React
+Native's hook.
+
+Found by looking at a screenshot, not by a test: the smoke test was asserting
+"no console errors in dark", which a wrong-but-valid palette passes happily. It
+now asserts the rendered text colour matches the theme's token, which is the
+thing that was actually wrong.
+
+## 6. The metric RPCs are admin-gated, not merely un-granted
+
+`get_organic_share`, `get_coverage` and `get_report_rate` were written with
+`revoke all ... from public, anon`, which left them callable by nobody at all —
+including the admin page that needs them. Granting execute to `authenticated`
+without a check would have published the business metrics to every signed-in
+user. They now check `is_admin()` internally and are granted to
+`authenticated`, matching how `moderate_report` and `admin_monday_review`
+already worked.
+
+## 7. Report photos are schema-only in Phase 1
+
+`report_photos`, the storage path column and the erasure behaviour all exist,
+because erasure had to be settled before the first report (§10.2). No upload UI
+is built: it needs a storage bucket, its own policies, and the EXIF check on a
+real device (§10.6), none of which serve the six steps in §18 at this phase.
+Build it when a report needs a photo to be believed.
+
+## 8. Sends go through an edge function, not `signInWithOtp`
+
+§5.1 asks for Turnstile plus 5 sends per email per hour and 20 per IP per hour.
+Per-IP limiting is impossible in a client — the client does not know its own
+address, and a limit it enforces is a limit an attacker skips. So the client
+calls `supabase/functions/send-otp`, which counts against `otp_send_log`, writes
+the log entry, and forwards to GoTrue with the Turnstile token attached.
+
+Turnstile is verified by GoTrue rather than by the function, because the token
+is single-use: verifying it in the function would consume it and GoTrue's own
+check would then fail. The function is the second line; Auth → Attack
+Protection is the first.
+
+## 9. The local database harness shims PostGIS
 
 `supabase/tests/run-local-checks.sh` runs every migration against a throwaway
 Postgres with point arithmetic substituted for the handful of geo functions.
