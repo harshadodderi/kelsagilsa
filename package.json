@@ -1,0 +1,41 @@
+{
+  "name": "kelsagilsa",
+  "version": "0.1.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "web": "expo start --web",
+    "build:web": "expo export --platform web",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "phase0": "tsx scripts/phase0-diagnostics.ts",
+    "verify:privacy": "tsx scripts/verify-privacy.ts",
+    "sync:launch-set": "tsx scripts/sync-launch-set.ts",
+    "seed:import": "tsx scripts/import-seed-observations.ts",
+    "db:check": "bash supabase/tests/run-local-checks.sh"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.112.3",
+    "expo": "~54.0.0",
+    "expo-constants": "~18.0.0",
+    "expo-image-manipulator": "~14.0.0",
+    "expo-linking": "~8.0.0",
+    "expo-localization": "~17.0.0",
+    "expo-router": "~6.0.0",
+    "expo-status-bar": "~3.0.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-native": "^0.81.4",
+    "react-native-safe-area-context": "~5.6.0",
+    "react-native-url-polyfill": "^2.0.0",
+    "react-native-web": "^0.21.2"
+  },
+  "devDependencies": {
+    "@types/react": "~19.1.0",
+    "babel-preset-expo": "~54.0.0",
+    "tsx": "^4.23.12",
+    "typescript": "~5.9.2",
+    "vitest": "^3.2.7"
+  }
+}

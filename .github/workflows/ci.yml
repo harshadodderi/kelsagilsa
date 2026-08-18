@@ -1,0 +1,30 @@
+name: ci
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+  database:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Applies every migration in order against a throwaway Postgres and runs
+      # the assertions in supabase/tests. PostGIS is shimmed — see the header
+      # of run-local-checks.sh for what that does and does not prove.
+      - run: npm run db:check
+        env:
+          PGBIN: /usr/lib/postgresql/16/bin

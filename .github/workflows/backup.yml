@@ -1,0 +1,29 @@
+# Weekly pg_dump.
+#
+# Free-tier Supabase has no point-in-time recovery. The price history is the
+# entire asset and it is unrecoverable if the project is lost (§16). Two
+# things this also guards against: the 7-day inactivity pause, and a bad
+# migration.
+name: backup
+
+on:
+  schedule:
+    - cron: '0 21 * * 0'
+  workflow_dispatch:
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: pg_dump
+        run: |
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          pg_dump "$DATABASE_URL" --no-owner --no-acl -Fc -f "kelsagilsa-$(date +%F).dump"
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: db-backup
+          path: 'kelsagilsa-*.dump'
+          retention-days: 90

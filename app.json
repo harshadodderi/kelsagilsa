@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "Kelsagilsa",
+    "slug": "kelsagilsa",
+    "version": "0.1.0",
+    "scheme": "kelsagilsa",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "plugins": [
+      "expo-router",
+      "expo-localization"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "name": "Kelsagilsa",
+      "shortName": "Kelsagilsa",
+      "themeColor": "#0B5F53",
+      "backgroundColor": "#FFFFFF",
+      "display": "standalone",
+      "lang": "en-IN"
+    }
+  }
+}
